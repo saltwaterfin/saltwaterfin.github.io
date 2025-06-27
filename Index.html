@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jungle Jumper: Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; }
+        canvas { display: block; background: #3a3; margin: 0 auto; touch-action: none; }
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 10;
+        }
+        .btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+            font-size: 24px;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="controls">
+        <div class="btn" id="left">&#9664;</div>
+        <div class="btn" id="jump">&#9650;</div>
+        <div class="btn" id="right">&#9654;</div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const canvas = document.getElementById("gameCanvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 100;
+
+            let player = { x: 50, y: 300, w: 30, h: 30, vy: 0, onGround: true };
+            let gravity = 0.8;
+            let keys = { left: false, right: false };
+
+            let platforms = [
+                {x: 0, y: canvas.height - 50, w: canvas.width, h: 50},
+                {x: 200, y: canvas.height - 100, w: 100, h: 10},
+                {x: 350, y: canvas.height - 150, w: 100, h: 10},
+                {x: 500, y: canvas.height - 200, w: 100, h: 10}
+            ];
+
+            document.getElementById("left").addEventListener("touchstart", () => keys.left = true);
+            document.getElementById("left").addEventListener("touchend", () => keys.left = false);
+            document.getElementById("right").addEventListener("touchstart", () => keys.right = true);
+            document.getElementById("right").addEventListener("touchend", () => keys.right = false);
+            document.getElementById("jump").addEventListener("touchstart", () => {
+                if (player.onGround) {
+                    player.vy = -12;
+                    player.onGround = false;
+                }
+            });
+
+            function update() {
+                if (keys.right) player.x += 4;
+                if (keys.left) player.x -= 4;
+
+                player.vy += gravity;
+                player.y += player.vy;
+
+                // Collision detection
+                player.onGround = false;
+                for (let p of platforms) {
+                    if (player.x < p.x + p.w &&
+                        player.x + player.w > p.x &&
+                        player.y < p.y + p.h &&
+                        player.y + player.h > p.y) {
+                            player.y = p.y - player.h;
+                            player.vy = 0;
+                            player.onGround = true;
+                    }
+                }
+
+                // Fall reset
+                if (player.y > canvas.height) {
+                    player.y = 300;
+                    player.vy = 0;
+                    player.x = 50;
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#6a3";
+                for (let p of platforms) {
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                }
+
+                ctx.fillStyle = "#f00";
+                ctx.fillRect(player.x, player.y, player.w, player.h);
+            }
+
+            function loop() {
+                update();
+                draw();
+                requestAnimationFrame(loop);
+            }
+
+            loop();
+        };
+    </script>
+</body>
+</html>
